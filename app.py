@@ -163,6 +163,10 @@ button:hover{
 .link:hover{
   text-decoration:underline;
 }
+.empty{
+  color:var(--muted);
+  padding:14px 0 4px;
+}
 </style>
 </head>
 <body>
@@ -201,6 +205,7 @@ EMPLOYEES_HTML = """
   <h1>Працівники</h1>
   <p class="muted">У таблиці можна змінювати лише поле money. ПІБ не редагується. Updated_at показується тільки датою.</p>
 
+  {% if employees %}
   <table>
     <thead>
       <tr>
@@ -229,6 +234,9 @@ EMPLOYEES_HTML = """
       {% endfor %}
     </tbody>
   </table>
+  {% else %}
+    <div class="empty">Немає даних у таблиці employees.</div>
+  {% endif %}
 </div>
 """
 
@@ -264,6 +272,7 @@ REPORT_HTML = """
 
   <div class="card">
     <h2>Загальна сума по днях</h2>
+    {% if daily_totals %}
     <table>
       <thead>
         <tr>
@@ -280,10 +289,14 @@ REPORT_HTML = """
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+      <div class="empty">За обраний місяць відвідувань немає.</div>
+    {% endif %}
   </div>
 
   <div class="card">
     <h2>По кожному співробітнику за місяць</h2>
+    {% if employee_totals %}
     <table>
       <thead>
         <tr>
@@ -306,6 +319,9 @@ REPORT_HTML = """
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+      <div class="empty">За обраний місяць немає даних по співробітниках.</div>
+    {% endif %}
   </div>
 </div>
 """
@@ -338,6 +354,7 @@ EMPLOYEE_VISITS_HTML = """
 
   <div class="card">
     <h2>Список дат відвідувань їдальні</h2>
+    {% if visits %}
     <table>
       <thead>
         <tr>
@@ -352,6 +369,9 @@ EMPLOYEE_VISITS_HTML = """
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+      <div class="empty">У вибраному місяці відвідувань немає.</div>
+    {% endif %}
   </div>
 </div>
 """
@@ -417,6 +437,7 @@ def employees_page():
 @app.post("/employees/<int:employee_id>/update")
 def employee_update(employee_id: int):
     money = request.form.get("money", type=int)
+
     if money is None or money < 0:
         flash("Money має бути невід’ємним числом")
         return redirect(url_for("employees_page"))
@@ -511,6 +532,10 @@ def employee_visits_page(employee_id: int):
         )
         employee = cur.fetchone()
 
+        if not employee:
+            flash("Працівника не знайдено")
+            return redirect(url_for("employees_page"))
+
         cur.execute(
             """
             SELECT visit_time
@@ -522,10 +547,6 @@ def employee_visits_page(employee_id: int):
             (employee_id, start_date, end_date),
         )
         visits = cur.fetchall()
-
-    if not employee:
-        flash("Працівника не знайдено")
-        return redirect(url_for("employees_page"))
 
     total_sum = len(visits) * employee["money"]
 
@@ -540,4 +561,4 @@ def employee_visits_page(employee_id: int):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True)

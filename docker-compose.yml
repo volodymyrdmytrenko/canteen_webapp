@@ -3,7 +3,7 @@ services:
     build: .
     container_name: canteen_web
     ports:
-      - "8000:8000"
+      - "5000:5000"
     env_file:
       - .env
     restart: unless-stopped
