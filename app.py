@@ -176,12 +176,14 @@ button:hover{
 </head>
 <body>
 <div class="wrap">
+  {% if session.get('operator_id') %}
   <div class="topbar">
     <a href="{{ url_for('index') }}">Головна</a>
     <a href="{{ url_for('employees_page') }}">Працівники</a>
     <a href="{{ url_for('report_page') }}">Звіт</a>
-    <a href="/logout">Вийти</a>
+    <a href="{{ url_for('logout') }}">Вийти</a>
   </div>
+  {% endif %}
 
   {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -192,8 +194,7 @@ button:hover{
   {% endwith %}
 
   {{ content|safe }}
-</div>
-</body>
+</div></body>
 </html>
 """
 
@@ -458,11 +459,12 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if session.get("operator_id"):
+        return redirect(url_for("index"))
 
     if request.method == "POST":
-
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
 
         db = get_db()
 
@@ -471,24 +473,24 @@ def login():
                 """
                 SELECT id, username, password_hash
                 FROM operators
-                WHERE username=%s AND active=1
+                WHERE username = %s AND active = 1
                 """,
                 (username,)
             )
-
             user = cur.fetchone()
 
         if user and check_password_hash(user["password_hash"], password):
-
             session["operator_id"] = user["id"]
             session["username"] = user["username"]
+            return redirect(url_for("index"))
 
-            return redirect("/")
+        flash("Невірний логін або пароль")
 
-        return render_template_string(LOGIN_HTML, error="Невірний логін або пароль")
-
-    return render_template_string(LOGIN_HTML, error=None)
-
+    return render_template_string(
+        BASE_HTML,
+        title="Вхід",
+        content=render_template_string(LOGIN_HTML)
+    )
 
 @app.route("/logout")
 @login_required
