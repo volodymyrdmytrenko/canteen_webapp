@@ -189,7 +189,7 @@ button:hover{
     <a href="{{ url_for('index') }}">Головна</a>
     <a href="{{ url_for('employees_page') }}">Працівники</a>
     <a href="{{ url_for('report_page') }}">Звіт</a>
-    <a href="{{ url_for('logout') }}">Вийти</a>
+    <a href="{{ url_for('logout') }}">Вихід</a>
   </div>
   {% endif %}
 
@@ -282,7 +282,7 @@ EMPLOYEES_HTML = """
 REPORT_HTML = """
 <div class="grid">
   <div class="card">
-    <h1>Звіт за місяць</h1>
+    <h1>Звіт за період</h1>
     <form class="inline" method="get" action="{{ url_for('report_page') }}">
       <label>
       Дата з
@@ -300,7 +300,7 @@ REPORT_HTML = """
   <div class="card">
     <div class="kpi">
       <div class="box">
-        <div class="muted">Сума за місяць</div>
+        <div class="muted">Сума за період</div>
         <div class="num">{{ '%.2f'|format(month_total) }}</div>
       </div>
       <div class="box">
@@ -334,12 +334,12 @@ REPORT_HTML = """
       </tbody>
     </table>
     {% else %}
-      <div class="empty">За обраний місяць відвідувань немає.</div>
+      <div class="empty">За обраний період відвідувань немає.</div>
     {% endif %}
   </div>
 
   <div class="card">
-    <h2>По кожному співробітнику за місяць</h2>
+    <h2>По кожному співробітнику за період</h2>
     {% if employee_totals %}
     <table>
       <thead>
@@ -364,7 +364,7 @@ REPORT_HTML = """
       </tbody>
     </table>
     {% else %}
-      <div class="empty">За обраний місяць немає даних по співробітниках.</div>
+      <div class="empty">За обраний період немає даних по співробітниках.</div>
     {% endif %}
   </div>
 </div>
@@ -375,10 +375,17 @@ EMPLOYEE_VISITS_HTML = """
   <div class="card">
     <h1>{{ employee['full_name'] }}</h1>
     <form class="inline" method="get" action="{{ url_for('employee_visits_page', employee_id=employee['id']) }}">
+
       <label>
-        Місяць
-        <input type="month" name="month" value="{{ selected_month }}" required>
+      Дата з
+      <input type="date" name="start_date" value="{{ start_date }}">
       </label>
+
+      <label>
+      Дата по
+      <input type="date" name="end_date" value="{{ end_date }}">
+      </label>
+      
       <button type="submit">Показати</button>
     </form>
   </div>
