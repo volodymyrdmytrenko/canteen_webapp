@@ -168,6 +168,10 @@ button:hover{
   color:var(--muted);
   padding:14px 0 4px;
 }
+.login-wrap{
+  max-width:420px;
+  margin:120px auto;
+}
 </style>
 </head>
 <body>
@@ -203,12 +207,14 @@ INDEX_HTML = """
 """
 
 LOGIN_HTML = """
-<div class="login-wrap">
-  <div class="card">
-    <h1>Вхід</h1>
-    <p class="muted">Авторизація операторів їдальні.</p>
+<div class="grid">
+  <div class="card login-wrap">
+
+    <h1>Вхід у систему</h1>
+    <p class="muted">Авторизація оператора їдальні</p>
 
     <form method="post" action="{{ url_for('login') }}">
+
       <label>
         Логін
         <input type="text" name="username" required autocomplete="username">
@@ -219,11 +225,16 @@ LOGIN_HTML = """
         <input type="password" name="password" required autocomplete="current-password">
       </label>
 
+      <br>
+
       <button type="submit">Увійти</button>
+
     </form>
+
   </div>
 </div>
 """
+
 
 EMPLOYEES_HTML = """
 <div class="card">
