@@ -446,6 +446,7 @@ def month_bounds(month_value: str) -> tuple[str, str]:
 
 
 @app.route("/")
+@login_required
 def index():
     return render_template_string(BASE_HTML, title="Головна", content=render_template_string(INDEX_HTML))
 
