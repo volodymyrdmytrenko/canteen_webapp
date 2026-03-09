@@ -186,7 +186,7 @@ button:hover{
 <div class="wrap">
   {% if session.get('operator_id') %}
   <div class="topbar">
-    <a href="{{ url_for('index') }}">Головна</a>
+    <a href="{{ url_for('index') }}">KONSORT</a>
     <a href="{{ url_for('employees_page') }}">Працівники</a>
     <a href="{{ url_for('report_page') }}">Звіт</a>
     <a href="{{ url_for('logout') }}">Вихід</a>
@@ -209,7 +209,7 @@ button:hover{
 INDEX_HTML = """
 <div class="grid">
   <div class="card">
-    <h1>KONSORT - їдальня</h1>
+    <h1>Їдальня адміністрування</h1>
     <p class="muted"> Web-редактор денної компенсації працівників та формування звітів по відвідуваннях їдальні.</p>
   </div>
 </div>
