@@ -194,8 +194,8 @@ button:hover{
 INDEX_HTML = """
 <div class="grid">
   <div class="card">
-    <h1>Web-редактор їдальні</h1>
-    <p class="muted">Редагування денного ліміту працівників та формування звітів по відвідуваннях їдальні.</p>
+    <h1>KONSORT-їдальня Web-редактор даних</h1>
+    <p class="muted">Редагування денної компенсації працівників та формування звітів по відвідуваннях їдальні.</p>
   </div>
 </div>
 """
@@ -203,7 +203,7 @@ INDEX_HTML = """
 EMPLOYEES_HTML = """
 <div class="card">
   <h1>Працівники</h1>
-  <p class="muted">У таблиці можна змінювати лише поле money. ПІБ не редагується. Updated_at показується тільки датою.</p>
+  <p class="muted">У таблиці можна змінювати лише поле Компенсація.</p>
 
   {% if employees %}
   <table>
@@ -211,7 +211,7 @@ EMPLOYEES_HTML = """
       <tr>
         <th>ПІБ</th>
         <th>Активний</th>
-        <th>Money</th>
+        <th>Компенсація</th>
         <th>Оновлено</th>
         <th></th>
       </tr>
@@ -538,11 +538,11 @@ def employee_visits_page(employee_id: int):
 
         cur.execute(
             """
-            SELECT visit_time
+            SELECT DATE_FORMAT(visit_time, '%d.%m.%Y %H:%i') AS visit_time
             FROM visits
             WHERE employee_id = %s
               AND DATE(visit_time) BETWEEN %s AND %s
-            ORDER BY visit_time DESC
+            ORDER BY visit_time
             """,
             (employee_id, start_date, end_date),
         )
