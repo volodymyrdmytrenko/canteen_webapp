@@ -242,7 +242,7 @@ LOGIN_HTML = """
 EMPLOYEES_HTML = """
 <div class="card">
   <h1>Працівники</h1>
-  <p class="muted">У таблиці можна змінювати лише поле Компенсація.</p>
+  <p class="muted">У таблиці можна змінювати поля Активний та Компенсація.</p>
 
   {% if employees %}
   <table>
