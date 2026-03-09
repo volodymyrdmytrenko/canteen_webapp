@@ -172,6 +172,14 @@ button:hover{
   max-width:420px;
   margin:120px auto;
 }
+.login-wrap form{
+  display:grid;
+  gap:18px;
+}
+.login-wrap button{
+  margin-top:6px;
+}
+
 </style>
 </head>
 <body>
