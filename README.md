@@ -54,3 +54,9 @@ http://localhost:8000
 Для Linux інколи треба або:
 - додати `extra_hosts`
 - або вказати реальну IP-адресу сервера MySQL
+
+
+
+Для створення оператора з паролем admin123
+from werkzeug.security import generate_password_hash
+print(generate_password_hash("admin123"))
