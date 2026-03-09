@@ -538,13 +538,13 @@ def employee_visits_page(employee_id: int):
 
         cur.execute(
             """
-            SELECT 
+            SELECT
                 visit_time,
-                DATE_FORMAT(visit_time, '%d.%m.%Y %H:%i') AS visit_time_formatted
+                DATE_FORMAT(visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted
             FROM visits
             WHERE employee_id = %s
               AND DATE(visit_time) BETWEEN %s AND %s
-            ORDER BY visit_time
+            ORDER BY visit_time ASC
             """,
             (employee_id, start_date, end_date),
         )
