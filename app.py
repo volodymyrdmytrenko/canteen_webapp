@@ -203,24 +203,25 @@ INDEX_HTML = """
 """
 
 LOGIN_HTML = """
-<div class="card" style="max-width:400px;margin:auto;margin-top:100px;">
-<h2>Вхід</h2>
+<div class="login-wrap">
+  <div class="card">
+    <h1>Вхід</h1>
+    <p class="muted">Авторизація операторів їдальні.</p>
 
-<form method="post">
-<label>Логін</label>
-<input type="text" name="username" required>
+    <form method="post" action="{{ url_for('login') }}">
+      <label>
+        Логін
+        <input type="text" name="username" required autocomplete="username">
+      </label>
 
-<label>Пароль</label>
-<input type="password" name="password" required>
+      <label>
+        Пароль
+        <input type="password" name="password" required autocomplete="current-password">
+      </label>
 
-<br><br>
-
-<button type="submit">Увійти</button>
-</form>
-
-{% if error %}
-<p style="color:red">{{ error }}</p>
-{% endif %}
+      <button type="submit">Увійти</button>
+    </form>
+  </div>
 </div>
 """
 
