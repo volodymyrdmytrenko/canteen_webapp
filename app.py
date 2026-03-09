@@ -225,7 +225,7 @@ EMPLOYEES_HTML = """
           <td>
             <input type="number" name="money" min="0" step="1" value="{{ row['money'] }}" required>
           </td>
-          <td>{{ row['updated_at'] or '' }}</td>
+          <td>{{ row['updated_date'] }} or '' }}</td>
           <td>
             <button type="submit">Зберегти</button>
           </td>
@@ -423,7 +423,7 @@ def employees_page():
                 full_name,
                 active,
                 money,
-                DATE_FORMAT(updated_at, '%%d.%%m.%%Y') AS updated_at
+                DATE_FORMAT(updated_at, '%%d.%%m.%%Y') AS updated_date
             FROM employees
             ORDER BY full_name
             """
