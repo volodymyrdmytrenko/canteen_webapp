@@ -260,7 +260,9 @@ EMPLOYEES_HTML = """
       <tr>
         <form method="post" action="{{ url_for('employee_update', employee_id=row['id']) }}">
           <td>{{ row['full_name'] }}</td>
-          <td>{{ 'Так' if row['active'] else 'Ні' }}</td>
+          <td>
+            <input type="checkbox" name="active" value="1" {% if row['active'] %}checked{% endif %}>
+          </td>
           <td>
             <input type="number" name="money" min="0" step="1" value="{{ row['money'] }}" required>
           </td>
@@ -357,7 +359,7 @@ REPORT_HTML = """
           <td>{{ row['visit_count'] }}</td>
           <td>{{ '%.2f'|format(row['employee_total'] or 0) }}</td>
           <td>
-            <a class="link" href="{{ url_for('employee_visits_page', employee_id=row['employee_id'], month=selected_month) }}">Детально</a>
+           <a class="link" href="{{ url_for('employee_visits_page', employee_id=row['employee_id'], start_date=start_date, end_date=end_date) }}">Детально</a>
           </td>
         </tr>
         {% endfor %}
@@ -552,8 +554,10 @@ def employees_page():
 
 
 @app.post("/employees/<int:employee_id>/update")
+@login_required
 def employee_update(employee_id: int):
     money = request.form.get("money", type=int)
+    active = 1 if request.form.get("active") else 0
 
     if money is None or money < 0:
         flash("Money має бути невід’ємним числом")
@@ -561,10 +565,11 @@ def employee_update(employee_id: int):
 
     db = get_db()
     with db.cursor() as cur:
-        cur.execute(
-            "UPDATE employees SET money = %s WHERE id = %s",
-            (money, employee_id),
-        )
+      cur.execute(
+        "UPDATE employees SET money = %s, active = %s WHERE id = %s",
+        (money, active, employee_id),
+      )
+    
     db.commit()
 
     flash("Збережено")
