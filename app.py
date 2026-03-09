@@ -423,7 +423,7 @@ def employees_page():
                 full_name,
                 active,
                 money,
-                DATE(updated_at) AS updated_at
+                DATE_FORMAT(updated_at, '%%d.%%m.%%Y') AS updated_at
             FROM employees
             ORDER BY full_name
             """
