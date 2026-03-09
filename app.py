@@ -207,14 +207,12 @@ INDEX_HTML = """
 """
 
 LOGIN_HTML = """
-<div class="grid">
-  <div class="card login-wrap">
-
-    <h1>Вхід у систему</h1>
-    <p class="muted">Авторизація оператора їдальні</p>
+<div class="login-wrap">
+  <div class="card">
+    <h1>Вхід</h1>
+    <p class="muted">Авторизація операторів їдальні.</p>
 
     <form method="post" action="{{ url_for('login') }}">
-
       <label>
         Логін
         <input type="text" name="username" required autocomplete="username">
@@ -225,12 +223,8 @@ LOGIN_HTML = """
         <input type="password" name="password" required autocomplete="current-password">
       </label>
 
-      <br>
-
       <button type="submit">Увійти</button>
-
     </form>
-
   </div>
 </div>
 """
