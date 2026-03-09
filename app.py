@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+import pymysql
+
 from calendar import monthrange
 from datetime import datetime
 from typing import Any
-
-import pymysql
-from flask import Flask, flash, g, redirect, render_template_string, request, url_for
+from werkzeug.security import check_password_hash
+from flask import session, Flask, flash, g, redirect, render_template_string, request, url_for
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -175,6 +176,7 @@ button:hover{
     <a href="{{ url_for('index') }}">Головна</a>
     <a href="{{ url_for('employees_page') }}">Працівники</a>
     <a href="{{ url_for('report_page') }}">Звіт</a>
+    <a href="/logout">Вийти</a>
   </div>
 
   {% with messages = get_flashed_messages() %}
@@ -197,6 +199,28 @@ INDEX_HTML = """
     <h1>KONSORT - їдальня</h1>
     <p class="muted"> Web-редактор денної компенсації працівників та формування звітів по відвідуваннях їдальні.</p>
   </div>
+</div>
+"""
+
+LOGIN_HTML = """
+<div class="card" style="max-width:400px;margin:auto;margin-top:100px;">
+<h2>Вхід</h2>
+
+<form method="post">
+<label>Логін</label>
+<input type="text" name="username" required>
+
+<label>Пароль</label>
+<input type="password" name="password" required>
+
+<br><br>
+
+<button type="submit">Увійти</button>
+</form>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
 </div>
 """
 
@@ -391,6 +415,20 @@ def get_db() -> pymysql.connections.Connection:
         )
     return g.db
 
+from functools import wraps
+
+def login_required(f):
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+
+        if "operator_id" not in session:
+            return redirect("/login")
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
 
 @app.teardown_appcontext
 def close_db(_error: Any) -> None:
@@ -411,8 +449,51 @@ def month_bounds(month_value: str) -> tuple[str, str]:
 def index():
     return render_template_string(BASE_HTML, title="Головна", content=render_template_string(INDEX_HTML))
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        db = get_db()
+
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, username, password_hash
+                FROM operators
+                WHERE username=%s AND active=1
+                """,
+                (username,)
+            )
+
+            user = cur.fetchone()
+
+        if user and check_password_hash(user["password_hash"], password):
+
+            session["operator_id"] = user["id"]
+            session["username"] = user["username"]
+
+            return redirect("/")
+
+        return render_template_string(LOGIN_HTML, error="Невірний логін або пароль")
+
+    return render_template_string(LOGIN_HTML, error=None)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+
+    session.clear()
+
+    return redirect("/login")
+
 
 @app.route("/employees")
+@login_required
 def employees_page():
     db = get_db()
     with db.cursor() as cur:
@@ -455,6 +536,7 @@ def employee_update(employee_id: int):
 
 
 @app.route("/report")
+@login_required
 def report_page():
     selected_month = request.args.get("month") or datetime.now().strftime("%Y-%m")
     start_date, end_date = month_bounds(selected_month)
@@ -520,6 +602,7 @@ def report_page():
 
 
 @app.route("/employees/<int:employee_id>/visits")
+@login_required
 def employee_visits_page(employee_id: int):
     selected_month = request.args.get("month") or datetime.now().strftime("%Y-%m")
     start_date, end_date = month_bounds(selected_month)
