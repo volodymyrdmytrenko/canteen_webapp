@@ -218,8 +218,8 @@ INDEX_HTML = """
 LOGIN_HTML = """
 <div class="login-wrap">
   <div class="card">
-    <h1>Вхід</h1>
-    <p class="muted">Авторизація операторів їдальні.</p>
+    <h1>KONSORT - їдальня</h1>
+    <p class="muted">Авторизація адміністратора.</p>
 
     <form method="post" action="{{ url_for('login') }}">
       <label>
@@ -285,8 +285,13 @@ REPORT_HTML = """
     <h1>Звіт за місяць</h1>
     <form class="inline" method="get" action="{{ url_for('report_page') }}">
       <label>
-        Місяць
-        <input type="month" name="month" value="{{ selected_month }}" required>
+      Дата з
+      <input type="date" name="start_date" value="{{ start_date }}">
+      </label>
+
+      <label>
+      Дата по
+      <input type="date" name="end_date" value="{{ end_date }}">
       </label>
       <button type="submit">Показати</button>
     </form>
@@ -415,6 +420,13 @@ EMPLOYEE_VISITS_HTML = """
 </div>
 """
 
+from datetime import datetime, date
+
+def default_period():
+    today = date.today()
+    start = today.replace(day=1)
+    end = today
+    return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
 
 def get_db() -> pymysql.connections.Connection:
     if "db" not in g:
@@ -555,8 +567,12 @@ def employee_update(employee_id: int):
 @app.route("/report")
 @login_required
 def report_page():
-    selected_month = request.args.get("month") or datetime.now().strftime("%Y-%m")
-    start_date, end_date = month_bounds(selected_month)
+    
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+
+    if not start_date or not end_date:
+        start_date, end_date = default_period()
 
     db = get_db()
     with db.cursor() as cur:
@@ -608,7 +624,8 @@ def report_page():
 
     html = render_template_string(
         REPORT_HTML,
-        selected_month=selected_month,
+        start_date=start_date,
+        end_date=end_date,
         daily_totals=daily_totals,
         employee_totals=employee_totals,
         month_total=totals["month_total"] or 0,
@@ -621,9 +638,11 @@ def report_page():
 @app.route("/employees/<int:employee_id>/visits")
 @login_required
 def employee_visits_page(employee_id: int):
-    selected_month = request.args.get("month") or datetime.now().strftime("%Y-%m")
-    start_date, end_date = month_bounds(selected_month)
+  start_date = request.args.get("start_date")
+  end_date = request.args.get("end_date")
 
+if not start_date or not end_date:
+    start_date, end_date = default_period()
     db = get_db()
     with db.cursor() as cur:
         cur.execute(
