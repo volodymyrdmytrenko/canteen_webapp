@@ -76,7 +76,7 @@ body{
 }
 .grid{
   display:grid;
-  grid-template-columns:1fr;
+  grid-template-columns:1fr 1fr;
   gap:20px;
 }
 h1,h2,h3{
@@ -283,8 +283,47 @@ EMPLOYEES_HTML = """
 
 REPORT_HTML = """
 <div class="grid">
+
+  <!-- ЗВІТ ЗА ДЕНЬ -->
+  <div class="card">
+    <h1>Звіт за день</h1>
+
+    <form class="inline" method="get" action="{{ url_for('report_page') }}">
+      <label>
+        Дата
+        <input type="date" name="day_date" value="{{ day_date }}">
+      </label>
+
+      <button name="mode" value="day" type="submit">Показати</button>
+    </form>
+
+    {% if day_visits %}
+    <table>
+      <thead>
+        <tr>
+          <th>Дата і час</th>
+          <th>Працівник</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in day_visits %}
+        <tr>
+          <td>{{ row['visit_time_formatted'] }}</td>
+          <td>{{ row['full_name'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">За цей день відвідувань немає.</div>
+    {% endif %}
+  </div>
+
+
+  <!-- ЗВІТ ЗА ПЕРІОД -->
   <div class="card">
     <h1>Звіт за період</h1>
+
     <form class="inline" method="get" action="{{ url_for('report_page') }}">
       <label>
       Дата з
@@ -295,80 +334,29 @@ REPORT_HTML = """
       Дата по
       <input type="date" name="end_date" value="{{ end_date }}">
       </label>
-      <button type="submit">Показати</button>
-    </form>
-  </div>
 
-  <div class="card">
+      <button name="mode" value="period" type="submit">Показати</button>
+    </form>
+
     <div class="kpi">
       <div class="box">
         <div class="muted">Сума за період</div>
         <div class="num">{{ '%.2f'|format(month_total) }}</div>
       </div>
+
       <div class="box">
         <div class="muted">Кількість відвідувань</div>
         <div class="num">{{ visit_count }}</div>
       </div>
+
       <div class="box">
         <div class="muted">Активних працівників</div>
         <div class="num">{{ active_employees }}</div>
       </div>
     </div>
+
   </div>
 
-  <div class="card">
-    <h2>Загальна сума по днях</h2>
-    {% if daily_totals %}
-    <table>
-      <thead>
-        <tr>
-          <th>Дата</th>
-          <th>Сума</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in daily_totals %}
-        <tr>
-          <td>{{ row['visit_day'] }}</td>
-          <td>{{ '%.2f'|format(row['day_total'] or 0) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="empty">За обраний період відвідувань немає.</div>
-    {% endif %}
-  </div>
-
-  <div class="card">
-    <h2>По кожному співробітнику за період</h2>
-    {% if employee_totals %}
-    <table>
-      <thead>
-        <tr>
-          <th>Працівник</th>
-          <th>Кількість відвідувань</th>
-          <th>Сума</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in employee_totals %}
-        <tr>
-          <td>{{ row['full_name'] }}</td>
-          <td>{{ row['visit_count'] }}</td>
-          <td>{{ '%.2f'|format(row['employee_total'] or 0) }}</td>
-          <td>
-           <a class="link" href="{{ url_for('employee_visits_page', employee_id=row['employee_id'], start_date=start_date, end_date=end_date) }}">Детально</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="empty">За обраний період немає даних по співробітниках.</div>
-    {% endif %}
-  </div>
 </div>
 """
 
@@ -579,47 +567,41 @@ def employee_update(employee_id: int):
 @app.route("/report")
 @login_required
 def report_page():
-    
+
+    mode = request.args.get("mode", "day")
+
+    db = get_db()
+
+    day_date = request.args.get("day_date")
+    if not day_date:
+        day_date = datetime.now().strftime("%Y-%m-%d")
+
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
     if not start_date or not end_date:
         start_date, end_date = default_period()
 
-    db = get_db()
     with db.cursor() as cur:
+
+        # ЗВІТ ЗА ДЕНЬ
         cur.execute(
             """
             SELECT
-                DATE(v.visit_time) AS visit_day,
-                SUM(e.money) AS day_total
+                v.visit_time,
+                DATE_FORMAT(v.visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted,
+                e.full_name
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
-            WHERE DATE(v.visit_time) BETWEEN %s AND %s
-            GROUP BY DATE(v.visit_time)
-            ORDER BY DATE(v.visit_time)
+            WHERE DATE(v.visit_time) = %s
+            ORDER BY v.visit_time ASC
             """,
-            (start_date, end_date),
+            (day_date,)
         )
-        daily_totals = cur.fetchall()
 
-        cur.execute(
-            """
-            SELECT
-                e.id AS employee_id,
-                e.full_name,
-                COUNT(v.id) AS visit_count,
-                SUM(e.money) AS employee_total
-            FROM visits v
-            JOIN employees e ON e.id = v.employee_id
-            WHERE DATE(v.visit_time) BETWEEN %s AND %s
-            GROUP BY e.id, e.full_name
-            ORDER BY e.full_name
-            """,
-            (start_date, end_date),
-        )
-        employee_totals = cur.fetchall()
+        day_visits = cur.fetchall()
 
+        # ЗВІТ ЗА ПЕРІОД
         cur.execute(
             """
             SELECT
@@ -632,20 +614,21 @@ def report_page():
             """,
             (start_date, end_date),
         )
+
         totals = cur.fetchone()
 
     html = render_template_string(
         REPORT_HTML,
+        day_date=day_date,
+        day_visits=day_visits,
         start_date=start_date,
         end_date=end_date,
-        daily_totals=daily_totals,
-        employee_totals=employee_totals,
         month_total=totals["month_total"] or 0,
         visit_count=totals["visit_count"] or 0,
         active_employees=totals["active_employees"] or 0,
     )
-    return render_template_string(BASE_HTML, title="Звіт", content=html)
 
+    return render_template_string(BASE_HTML, title="Звіт", content=html)
 
 @app.route("/employees/<int:employee_id>/visits")
 @login_required
