@@ -184,13 +184,18 @@ button:hover{
   grid-template-columns:1fr 1fr;
   gap:20px;
 }
-.brand{
+.topbar a.brand{
   background:#F2D233;
-  font-weight:700;
   color:#000;
-  padding:10px 16px;
-  border-radius:10px;
-  border:1px solid #e6c300;
+  font-weight:800;
+  letter-spacing:1px;
+  border:1px solid #e6c200;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.topbar a.brand:hover{
+  background:#ffd84a;
+  border-color:#d4b400;
 }
 
 </style>
