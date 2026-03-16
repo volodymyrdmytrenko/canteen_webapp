@@ -179,6 +179,11 @@ button:hover{
 .login-wrap button{
   margin-top:6px;
 }
+.report-filters{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
 
 </style>
 </head>
@@ -284,76 +289,114 @@ EMPLOYEES_HTML = """
 REPORT_HTML = """
 <div class="grid">
 
-  <!-- ЗВІТ ЗА ДЕНЬ -->
-  <div class="card">
-    <h1>Звіт за день</h1>
+  <!-- БЛОК УМОВ -->
+  <div class="report-filters">
 
-    <form class="inline" method="get" action="{{ url_for('report_page') }}">
-      <label>
-        Дата
-        <input type="date" name="day_date" value="{{ day_date }}">
-      </label>
+    <div class="card">
+      <h2>Звіт за день</h2>
 
-      <button name="mode" value="day" type="submit">Показати</button>
-    </form>
+      <form class="inline" method="get" action="{{ url_for('report_page') }}">
+        <label>
+          Дата
+          <input type="date" name="day_date" value="{{ day_date }}">
+        </label>
 
-    {% if day_visits %}
-    <table>
-      <thead>
-        <tr>
-          <th>Дата і час</th>
-          <th>Працівник</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in day_visits %}
-        <tr>
-          <td>{{ row['visit_time_formatted'] }}</td>
-          <td>{{ row['full_name'] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="empty">За цей день відвідувань немає.</div>
-    {% endif %}
+        <button type="submit" name="mode" value="day">
+          Показати
+        </button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Звіт за період</h2>
+
+      <form class="inline" method="get" action="{{ url_for('report_page') }}">
+        <label>
+          Дата з
+          <input type="date" name="start_date" value="{{ start_date }}">
+        </label>
+
+        <label>
+          Дата по
+          <input type="date" name="end_date" value="{{ end_date }}">
+        </label>
+
+        <button type="submit" name="mode" value="period">
+          Показати
+        </button>
+      </form>
+    </div>
+
   </div>
 
 
-  <!-- ЗВІТ ЗА ПЕРІОД -->
+  <!-- РЕЗУЛЬТАТ -->
   <div class="card">
-    <h1>Звіт за період</h1>
 
-    <form class="inline" method="get" action="{{ url_for('report_page') }}">
-      <label>
-      Дата з
-      <input type="date" name="start_date" value="{{ start_date }}">
-      </label>
+    {% if mode == 'day' %}
 
-      <label>
-      Дата по
-      <input type="date" name="end_date" value="{{ end_date }}">
-      </label>
+      <h2>Звіт за день</h2>
 
-      <button name="mode" value="period" type="submit">Показати</button>
-    </form>
+      {% if day_visits %}
+      <table>
+        <thead>
+          <tr>
+            <th>Дата і час</th>
+            <th>Працівник</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in day_visits %}
+          <tr>
+            <td>{{ row['visit_time_formatted'] }}</td>
+            <td>{{ row['full_name'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty">За цей день відвідувань немає.</div>
+      {% endif %}
 
-    <div class="kpi">
-      <div class="box">
-        <div class="muted">Сума за період</div>
-        <div class="num">{{ '%.2f'|format(month_total) }}</div>
+    {% else %}
+
+      <h2>Звіт за період</h2>
+
+      <div class="kpi">
+        <div class="box">
+          <div class="muted">Сума за період</div>
+          <div class="num">{{ '%.2f'|format(month_total) }}</div>
+        </div>
+
+        <div class="box">
+          <div class="muted">Кількість відвідувань</div>
+          <div class="num">{{ visit_count }}</div>
+        </div>
+
+        <div class="box">
+          <div class="muted">Активних працівників</div>
+          <div class="num">{{ active_employees }}</div>
+        </div>
       </div>
 
-      <div class="box">
-        <div class="muted">Кількість відвідувань</div>
-        <div class="num">{{ visit_count }}</div>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Сума</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in daily_totals %}
+          <tr>
+            <td>{{ row['visit_day'] }}</td>
+            <td>{{ '%.2f'|format(row['day_total'] or 0) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
 
-      <div class="box">
-        <div class="muted">Активних працівників</div>
-        <div class="num">{{ active_employees }}</div>
-      </div>
-    </div>
+    {% endif %}
 
   </div>
 
@@ -570,8 +613,6 @@ def report_page():
 
     mode = request.args.get("mode", "day")
 
-    db = get_db()
-
     day_date = request.args.get("day_date")
     if not day_date:
         day_date = datetime.now().strftime("%Y-%m-%d")
@@ -582,13 +623,14 @@ def report_page():
     if not start_date or not end_date:
         start_date, end_date = default_period()
 
+    db = get_db()
+
     with db.cursor() as cur:
 
         # ЗВІТ ЗА ДЕНЬ
         cur.execute(
             """
             SELECT
-                v.visit_time,
                 DATE_FORMAT(v.visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted,
                 e.full_name
             FROM visits v
@@ -605,9 +647,25 @@ def report_page():
         cur.execute(
             """
             SELECT
+                DATE(v.visit_time) AS visit_day,
+                SUM(e.money) AS day_total
+            FROM visits v
+            JOIN employees e ON e.id = v.employee_id
+            WHERE DATE(v.visit_time) BETWEEN %s AND %s
+            GROUP BY DATE(v.visit_time)
+            ORDER BY DATE(v.visit_time)
+            """,
+            (start_date, end_date),
+        )
+
+        daily_totals = cur.fetchall()
+
+        cur.execute(
+            """
+            SELECT
                 COUNT(v.id) AS visit_count,
                 COUNT(DISTINCT v.employee_id) AS active_employees,
-                COALESCE(SUM(e.money), 0) AS month_total
+                COALESCE(SUM(e.money),0) AS month_total
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) BETWEEN %s AND %s
@@ -619,16 +677,19 @@ def report_page():
 
     html = render_template_string(
         REPORT_HTML,
+        mode=mode,
         day_date=day_date,
-        day_visits=day_visits,
         start_date=start_date,
         end_date=end_date,
-        month_total=totals["month_total"] or 0,
-        visit_count=totals["visit_count"] or 0,
-        active_employees=totals["active_employees"] or 0,
+        day_visits=day_visits,
+        daily_totals=daily_totals,
+        month_total=totals["month_total"],
+        visit_count=totals["visit_count"],
+        active_employees=totals["active_employees"],
     )
 
     return render_template_string(BASE_HTML, title="Звіт", content=html)
+
 
 @app.route("/employees/<int:employee_id>/visits")
 @login_required
