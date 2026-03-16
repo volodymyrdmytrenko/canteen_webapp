@@ -184,6 +184,14 @@ button:hover{
   grid-template-columns:1fr 1fr;
   gap:20px;
 }
+.brand{
+  background:#F2D233;
+  font-weight:700;
+  color:#000;
+  padding:10px 16px;
+  border-radius:10px;
+  border:1px solid #e6c300;
+}
 
 </style>
 </head>
@@ -191,7 +199,7 @@ button:hover{
 <div class="wrap">
   {% if session.get('operator_id') %}
   <div class="topbar">
-    <a href="{{ url_for('index') }}">KONSORT</a>
+    <a href="{{ url_for('index') }}" class="brand">KONSORT</a>
     <a href="{{ url_for('employees_page') }}">Працівники</a>
     <a href="{{ url_for('report_page') }}">Звіт</a>
     <a href="{{ url_for('logout') }}">Вихід</a>
