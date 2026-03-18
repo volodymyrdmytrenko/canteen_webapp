@@ -649,9 +649,9 @@ def report_page():
                 DATE_FORMAT(v.visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted,
                 e.full_name,
                 CASE
-                    WHEN v.source = 'card' THEN 'Картка'
+                    WHEN v.source = 'rfid' THEN '-'
                     WHEN v.source = 'manual' THEN 'Вручну'
-                    ELSE '—'
+                    ELSE 'Невідомо'
                 END AS registration_type
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
@@ -660,7 +660,7 @@ def report_page():
             """,
             (day_date,)
         )
-        
+
         day_visits = cur.fetchall()
 
         # ЗВІТ ЗА ПЕРІОД
