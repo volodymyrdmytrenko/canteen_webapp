@@ -356,6 +356,7 @@ REPORT_HTML = """
           <tr>
             <th>Дата і час</th>
             <th>Працівник</th>
+            <th>Реєстрація</th>
           </tr>
         </thead>
         <tbody>
@@ -363,6 +364,7 @@ REPORT_HTML = """
           <tr>
             <td>{{ row['visit_time_formatted'] }}</td>
             <td>{{ row['full_name'] }}</td>
+            <td>{{ row['registration_type'] }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -643,9 +645,14 @@ def report_page():
         # ЗВІТ ЗА ДЕНЬ
         cur.execute(
             """
-            SELECT
-                DATE_FORMAT(v.visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted,
-                e.full_name
+        SELECT
+            DATE_FORMAT(v.visit_time, '%d.%m.%Y %H:%i') AS visit_time_formatted,
+            e.full_name,
+            CASE 
+                WHEN v.source = 'card' THEN 'Картка'
+                WHEN v.source = 'manual' THEN 'Вручну'
+                ELSE '—'
+            END AS registration_type
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) = %s
