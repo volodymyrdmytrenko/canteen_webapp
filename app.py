@@ -645,14 +645,14 @@ def report_page():
         # ЗВІТ ЗА ДЕНЬ
         cur.execute(
             """
-        SELECT
-            DATE_FORMAT(v.visit_time, '%d.%m.%Y %H:%i') AS visit_time_formatted,
-            e.full_name,
-            CASE 
-                WHEN v.source = 'card' THEN 'Картка'
-                WHEN v.source = 'manual' THEN 'Вручну'
-                ELSE '—'
-            END AS registration_type
+            SELECT
+                DATE_FORMAT(v.visit_time, '%%d.%%m.%%Y %%H:%%i') AS visit_time_formatted,
+                e.full_name,
+                CASE
+                    WHEN v.source = 'card' THEN 'Картка'
+                    WHEN v.source = 'manual' THEN 'Вручну'
+                    ELSE '—'
+                END AS registration_type
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) = %s
@@ -660,7 +660,7 @@ def report_page():
             """,
             (day_date,)
         )
-
+        
         day_visits = cur.fetchall()
 
         # ЗВІТ ЗА ПЕРІОД
