@@ -351,26 +351,32 @@ REPORT_HTML = """
       <h2>Звіт за день</h2>
 
       {% if day_visits %}
-      <table>
-        <thead>
-          <tr>
-            <th>Дата і час</th>
-            <th>Працівник</th>
-            <th>Реєстрація</th>
-            <th>Сума</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in day_visits %}
-          <tr>
-            <td>{{ row['visit_time_formatted'] }}</td>
-            <td>{{ row['full_name'] }}</td>
-            <td>{{ row['registration_type'] }}</td>
-            <td>{{ '%.2f'|format(row['money_from_employee'] or 0) }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th>Дата і час</th>
+              <th>Працівник</th>
+              <th>Реєстрація</th>
+              <th>Сума</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in day_visits %}
+            <tr>
+              <td>{{ row['visit_time_formatted'] }}</td>
+              <td>{{ row['full_name'] }}</td>
+              <td>{{ row['registration_type'] }}</td>
+              <td>{{ '%.2f'|format(row['money_from_employee'] or 0) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+              <td></td>
+              <td></td>
+              <td><strong>Всього за день:</strong></td>
+              <td><strong>{{ '%.2f'|format(day_total or 0) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
       {% else %}
         <div class="empty">За цей день відвідувань немає.</div>
       {% endif %}
@@ -665,6 +671,7 @@ def report_page():
         )
 
         day_visits = cur.fetchall()
+        day_total = sum((row["money_from_employee"] or 0) for row in day_visits)
 
         # ЗВІТ ЗА ПЕРІОД
         cur.execute(
@@ -705,6 +712,7 @@ def report_page():
         start_date=start_date,
         end_date=end_date,
         day_visits=day_visits,
+        day_total=day_total,
         daily_totals=daily_totals,
         month_total=totals["month_total"],
         visit_count=totals["visit_count"],
