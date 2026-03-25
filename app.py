@@ -357,6 +357,7 @@ REPORT_HTML = """
             <th>Дата і час</th>
             <th>Працівник</th>
             <th>Реєстрація</th>
+            <th>Сума</th>
           </tr>
         </thead>
         <tbody>
@@ -365,6 +366,7 @@ REPORT_HTML = """
             <td>{{ row['visit_time_formatted'] }}</td>
             <td>{{ row['full_name'] }}</td>
             <td>{{ row['registration_type'] }}</td>
+            <td>{{ '%.2f'|format(row['money_from_employee'] or 0) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -652,7 +654,8 @@ def report_page():
                     WHEN v.source = 'rfid' THEN '-'
                     WHEN v.source = 'manual' THEN 'Вручну'
                     ELSE 'Невідомо'
-                END AS registration_type
+                END AS registration_type,
+                e.money AS money_from_employee
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) = %s
