@@ -282,7 +282,7 @@ EMPLOYEES_HTML = """
             <input type="checkbox" name="active" value="1" {% if row['active'] %}checked{% endif %}>
           </td>
           <td>
-            <input type="number" name="money" min="0" step="1" value="{{ row['money'] }}" required>
+            <input type="number" name="fmoney" min="0" step="1" value="{{ row['fmoney'] }}" required>
           </td>
           <td>{{ row['updated_date'] or '' }}</td>
           <td>
@@ -366,7 +366,7 @@ REPORT_HTML = """
               <td>{{ row['visit_time_formatted'] }}</td>
               <td>{{ row['full_name'] }}</td>
               <td>{{ row['registration_type'] }}</td>
-              <td>{{ '%.2f'|format(row['money_from_employee'] or 0) }}</td>
+              <td>{{ '%.2f'|format(row['fmoney_from_employee'] or 0) }}</td>
             </tr>
             {% endfor %}
             <tr>
@@ -595,7 +595,7 @@ def employees_page():
                 id,
                 full_name,
                 active,
-                money,
+                fmoney,
                 DATE_FORMAT(updated_at, '%d.%m.%Y') AS updated_date
             FROM employees
             ORDER BY full_name
@@ -610,18 +610,18 @@ def employees_page():
 @app.post("/employees/<int:employee_id>/update")
 @login_required
 def employee_update(employee_id: int):
-    money = request.form.get("money", type=int)
+    fmoney = request.form.get("fmoney", type=int)
     active = 1 if request.form.get("active") else 0
 
-    if money is None or money < 0:
-        flash("Money має бути невід’ємним числом")
+    if fmoney is None or fmoney < 0:
+        flash("fmoney має бути невід’ємним числом")
         return redirect(url_for("employees_page"))
 
     db = get_db()
     with db.cursor() as cur:
       cur.execute(
-        "UPDATE employees SET money = %s, active = %s WHERE id = %s",
-        (money, active, employee_id),
+        "UPDATE employees SET fmoney = %s, active = %s WHERE id = %s",
+        (fmoney, active, employee_id),
       )
     
     db.commit()
@@ -661,7 +661,7 @@ def report_page():
                     WHEN v.source = 'manual' THEN 'Вручну'
                     ELSE 'Невідомо'
                 END AS registration_type,
-                e.money AS money_from_employee
+                e.fmoney AS fmoney_from_employee
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) = %s
@@ -671,14 +671,14 @@ def report_page():
         )
 
         day_visits = cur.fetchall()
-        day_total = sum((row["money_from_employee"] or 0) for row in day_visits)
+        day_total = sum((row["fmoney_from_employee"] or 0) for row in day_visits)
 
         # ЗВІТ ЗА ПЕРІОД
         cur.execute(
             """
             SELECT
                 DATE(v.visit_time) AS visit_day,
-                SUM(e.money) AS day_total
+                SUM(e.fmoney) AS day_total
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) BETWEEN %s AND %s
@@ -695,7 +695,7 @@ def report_page():
             SELECT
                 COUNT(v.id) AS visit_count,
                 COUNT(DISTINCT v.employee_id) AS active_employees,
-                COALESCE(SUM(e.money),0) AS month_total
+                COALESCE(SUM(e.fmoney),0) AS month_total
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) BETWEEN %s AND %s
@@ -734,7 +734,7 @@ def employee_visits_page(employee_id: int):
     db = get_db()
     with db.cursor() as cur:
         cur.execute(
-            "SELECT id, full_name, money FROM employees WHERE id = %s",
+            "SELECT id, full_name, fmoney FROM employees WHERE id = %s",
             (employee_id,),
         )
         employee = cur.fetchone()
@@ -757,7 +757,7 @@ def employee_visits_page(employee_id: int):
         )
         visits = cur.fetchall()
 
-    total_sum = len(visits) * employee["money"]
+    total_sum = len(visits) * employee["fmoney"]
 
     html = render_template_string(
         EMPLOYEE_VISITS_HTML,
