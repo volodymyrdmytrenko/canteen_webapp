@@ -4,7 +4,7 @@ set -euo pipefail
 
 URL="https://food.konsort.space/a_zakaz.sql"
 TMP_FILE="/tmp/a_zakaz.sql"
-LOG_FILE="/var/log/a_zakaz_import.log"
+LOG_FILE="./a_zakaz_import.log"
 
 DB_HOST="10.0.0.217"
 DB_PORT="3306"
@@ -15,13 +15,13 @@ DB_NAME="canteen"
 echo "[$(date '+%F %T')] start import" >> "$LOG_FILE"
 
 # щоб скрипт не запускався одночасно двічі
-if [ -f "$LOCK_FILE" ]; then
-    echo "[$(date '+%F %T')] ERROR: script already running" >> "$LOG_FILE"
-    exit 1
-fi
+#if [ -f "$LOCK_FILE" ]; then
+#    echo "[$(date '+%F %T')] ERROR: script already running" >> "$LOG_FILE"
+#    exit 1
+#fi
 
-trap 'rm -f "$LOCK_FILE"' EXIT
-touch "$LOCK_FILE"
+#trap 'rm -f "$LOCK_FILE"' EXIT
+#touch "$LOCK_FILE"
 
 
 wget -q -O "$TMP_FILE" "$URL"
