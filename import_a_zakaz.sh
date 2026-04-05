@@ -14,6 +14,16 @@ DB_NAME="canteen"
 
 echo "[$(date '+%F %T')] start import" >> "$LOG_FILE"
 
+# щоб скрипт не запускався одночасно двічі
+if [ -f "$LOCK_FILE" ]; then
+    echo "[$(date '+%F %T')] ERROR: script already running" >> "$LOG_FILE"
+    exit 1
+fi
+
+trap 'rm -f "$LOCK_FILE"' EXIT
+touch "$LOCK_FILE"
+
+
 wget -q -O "$TMP_FILE" "$URL"
 
 if [ ! -s "$TMP_FILE" ]; then
