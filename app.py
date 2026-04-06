@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
-import pymysql
-
 from calendar import monthrange
-from datetime import datetime, date
+from datetime import date, datetime
 from functools import wraps
 from typing import Any
+
+import pymysql
+from flask import Flask, flash, g, redirect, render_template_string, request, session, url_for
 from werkzeug.security import check_password_hash
-from flask import session, Flask, flash, g, redirect, render_template_string, request, url_for
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -158,13 +158,6 @@ button:hover{
   font-weight:700;
   margin-top:6px;
 }
-.link{
-  color:var(--primary);
-  text-decoration:none;
-}
-.link:hover{
-  text-decoration:underline;
-}
 .empty{
   color:var(--muted);
   padding:14px 0 4px;
@@ -193,12 +186,10 @@ button:hover{
   border:1px solid #e6c200;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
-
 .topbar a.brand:hover{
   background:#ffd84a;
   border-color:#d4b400;
 }
-
 </style>
 </head>
 <body>
@@ -222,7 +213,8 @@ button:hover{
   {% endwith %}
 
   {{ content|safe }}
-</div></body>
+</div>
+</body>
 </html>
 """
 
@@ -230,21 +222,7 @@ INDEX_HTML = """
 <div class="grid">
   <div class="card">
     <h1>Їдальня адміністрування</h1>
-    <p class="muted">Web-редактор денної компенсації працівників та формування звітів.</p>
-  </div>
-
-  <div class="report-filters">
-    <div class="card">
-      <h2>Звіт їдальня</h2>
-      <p class="muted">Звіт по відвідуваннях їдальні та компенсаціях.</p>
-      <a href="{{ url_for('report_page') }}" class="link">Відкрити звіт їдальня →</a>
-    </div>
-
-    <div class="card">
-      <h2>Звіт завод</h2>
-      <p class="muted">Звіт по замовленнях із таблиці a_zakaz без сум.</p>
-      <a href="{{ url_for('factory_report_page') }}" class="link">Відкрити звіт завод →</a>
-    </div>
+    <p class="muted">Web-редактор денної компенсації працівників та формування звітів по відвідуваннях їдальні і замовленнях заводу.</p>
   </div>
 </div>
 """
@@ -271,7 +249,6 @@ LOGIN_HTML = """
   </div>
 </div>
 """
-
 
 EMPLOYEES_HTML = """
 <div class="card">
@@ -301,9 +278,7 @@ EMPLOYEES_HTML = """
             <input type="number" name="fmoney" min="0" step="1" value="{{ row['fmoney'] }}" required>
           </td>
           <td>{{ row['updated_date'] or '' }}</td>
-          <td>
-            <button type="submit">Зберегти</button>
-          </td>
+          <td><button type="submit">Зберегти</button></td>
         </form>
       </tr>
       {% endfor %}
@@ -319,50 +294,36 @@ REPORT_HTML = """
 <div class="grid">
 
   <div class="report-filters">
-
     <div class="card">
       <h2>Звіт за день</h2>
-
       <form class="inline" method="get" action="{{ url_for('report_page') }}">
         <label>
           Дата
           <input type="date" name="day_date" value="{{ day_date }}">
         </label>
-
-        <button type="submit" name="mode" value="day">
-          Показати
-        </button>
+        <button type="submit" name="mode" value="day">Показати</button>
       </form>
     </div>
 
     <div class="card">
       <h2>Звіт за період</h2>
-
       <form class="inline" method="get" action="{{ url_for('report_page') }}">
         <label>
           Дата з
           <input type="date" name="start_date" value="{{ start_date }}">
         </label>
-
         <label>
           Дата по
           <input type="date" name="end_date" value="{{ end_date }}">
         </label>
-
-        <button type="submit" name="mode" value="period">
-          Показати
-        </button>
+        <button type="submit" name="mode" value="period">Показати</button>
       </form>
     </div>
-
   </div>
 
   <div class="card">
-
     {% if mode == 'day' %}
-
       <h2>Звіт за день</h2>
-
       {% if day_visits %}
         <table>
           <thead>
@@ -393,9 +354,7 @@ REPORT_HTML = """
       {% else %}
         <div class="empty">За цей день відвідувань немає.</div>
       {% endif %}
-
     {% else %}
-
       <h2>Звіт за період</h2>
 
       <div class="kpi">
@@ -403,12 +362,10 @@ REPORT_HTML = """
           <div class="muted">Сума за період</div>
           <div class="num">{{ '%.2f'|format(month_total) }}</div>
         </div>
-
         <div class="box">
           <div class="muted">Кількість відвідувань</div>
           <div class="num">{{ visit_count }}</div>
         </div>
-
         <div class="box">
           <div class="muted">Активних працівників</div>
           <div class="num">{{ active_employees }}</div>
@@ -431,11 +388,8 @@ REPORT_HTML = """
           {% endfor %}
         </tbody>
       </table>
-
     {% endif %}
-
   </div>
-
 </div>
 """
 
@@ -443,57 +397,43 @@ FACTORY_REPORT_HTML = """
 <div class="grid">
 
   <div class="report-filters">
-
     <div class="card">
       <h2>Звіт за день</h2>
-
       <form class="inline" method="get" action="{{ url_for('factory_report_page') }}">
         <label>
           Дата
           <input type="date" name="day_date" value="{{ day_date }}">
         </label>
-
-        <button type="submit" name="mode" value="day">
-          Показати
-        </button>
+        <button type="submit" name="mode" value="day">Показати</button>
       </form>
     </div>
 
     <div class="card">
       <h2>Звіт за період</h2>
-
       <form class="inline" method="get" action="{{ url_for('factory_report_page') }}">
         <label>
           Дата з
           <input type="date" name="start_date" value="{{ start_date }}">
         </label>
-
         <label>
           Дата по
           <input type="date" name="end_date" value="{{ end_date }}">
         </label>
-
-        <button type="submit" name="mode" value="period">
-          Показати
-        </button>
+        <button type="submit" name="mode" value="period">Показати</button>
       </form>
     </div>
-
   </div>
 
   <div class="card">
-
     {% if mode == 'day' %}
-
       <h2>Звіт завод за день</h2>
-
       {% if day_orders %}
         <table>
           <thead>
             <tr>
               <th>Працівник</th>
               <th>Замовлення</th>
-              <th>Час оформлення</th>
+              <th>Дата і час замовлення</th>
             </tr>
           </thead>
           <tbody>
@@ -509,22 +449,18 @@ FACTORY_REPORT_HTML = """
       {% else %}
         <div class="empty">За цей день замовлень немає.</div>
       {% endif %}
-
     {% else %}
-
       <h2>Звіт завод за період</h2>
 
       <div class="kpi">
         <div class="box">
-          <div class="muted">Всього замовлень</div>
+          <div class="muted">Кількість замовлень</div>
           <div class="num">{{ order_count }}</div>
         </div>
-
         <div class="box">
           <div class="muted">Днів із замовленнями</div>
           <div class="num">{{ days_with_orders }}</div>
         </div>
-
         <div class="box">
           <div class="muted">Унікальних працівників</div>
           <div class="num">{{ unique_people }}</div>
@@ -541,17 +477,14 @@ FACTORY_REPORT_HTML = """
         <tbody>
           {% for row in daily_orders %}
           <tr>
-            <td>{{ row['order_day_formatted'] }}</td>
+            <td>{{ row['order_day'] }}</td>
             <td>{{ row['order_count'] }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
-
     {% endif %}
-
   </div>
-
 </div>
 """
 
@@ -560,17 +493,16 @@ EMPLOYEE_VISITS_HTML = """
   <div class="card">
     <h1>{{ employee['full_name'] }}</h1>
     <form class="inline" method="get" action="{{ url_for('employee_visits_page', employee_id=employee['id']) }}">
-
       <label>
-      Дата з
-      <input type="date" name="start_date" value="{{ start_date }}">
+        Дата з
+        <input type="date" name="start_date" value="{{ start_date }}">
       </label>
 
       <label>
-      Дата по
-      <input type="date" name="end_date" value="{{ end_date }}">
+        Дата по
+        <input type="date" name="end_date" value="{{ end_date }}">
       </label>
-      
+
       <button type="submit">Показати</button>
     </form>
   </div>
@@ -636,7 +568,6 @@ def get_db() -> pymysql.connections.Connection:
 
 
 def login_required(f):
-
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "operator_id" not in session:
@@ -677,7 +608,6 @@ def login():
         password = request.form.get("password") or ""
 
         db = get_db()
-
         with db.cursor() as cur:
             cur.execute(
                 """
@@ -696,11 +626,7 @@ def login():
 
         flash("Невірний логін або пароль")
 
-    return render_template_string(
-        BASE_HTML,
-        title="Вхід",
-        content=render_template_string(LOGIN_HTML),
-    )
+    return render_template_string(BASE_HTML, title="Вхід", content=render_template_string(LOGIN_HTML))
 
 
 @app.route("/logout")
@@ -749,7 +675,6 @@ def employee_update(employee_id: int):
             "UPDATE employees SET fmoney = %s, active = %s WHERE id = %s",
             (fmoney, active, employee_id),
         )
-
     db.commit()
 
     flash("Збережено")
@@ -761,10 +686,7 @@ def employee_update(employee_id: int):
 def report_page():
     mode = request.args.get("mode", "day")
 
-    day_date = request.args.get("day_date")
-    if not day_date:
-        day_date = datetime.now().strftime("%Y-%m-%d")
-
+    day_date = request.args.get("day_date") or datetime.now().strftime("%Y-%m-%d")
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
@@ -772,7 +694,6 @@ def report_page():
         start_date, end_date = default_period()
 
     db = get_db()
-
     with db.cursor() as cur:
         cur.execute(
             """
@@ -792,7 +713,6 @@ def report_page():
             """,
             (day_date,),
         )
-
         day_visits = cur.fetchall()
         day_total = sum((row["fmoney_from_employee"] or 0) for row in day_visits)
 
@@ -809,7 +729,6 @@ def report_page():
             """,
             (start_date, end_date),
         )
-
         daily_totals = cur.fetchall()
 
         cur.execute(
@@ -817,14 +736,13 @@ def report_page():
             SELECT
                 COUNT(v.id) AS visit_count,
                 COUNT(DISTINCT v.employee_id) AS active_employees,
-                COALESCE(SUM(e.fmoney),0) AS month_total
+                COALESCE(SUM(e.fmoney), 0) AS month_total
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) BETWEEN %s AND %s
             """,
             (start_date, end_date),
         )
-
         totals = cur.fetchone()
 
     html = render_template_string(
@@ -840,7 +758,6 @@ def report_page():
         visit_count=totals["visit_count"],
         active_employees=totals["active_employees"],
     )
-
     return render_template_string(BASE_HTML, title="Звіт їдальня", content=html)
 
 
@@ -849,10 +766,7 @@ def report_page():
 def factory_report_page():
     mode = request.args.get("mode", "day")
 
-    day_date = request.args.get("day_date")
-    if not day_date:
-        day_date = datetime.now().strftime("%Y-%m-%d")
-
+    day_date = request.args.get("day_date") or datetime.now().strftime("%Y-%m-%d")
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
@@ -860,7 +774,6 @@ def factory_report_page():
         start_date, end_date = default_period()
 
     db = get_db()
-
     with db.cursor() as cur:
         cur.execute(
             """
@@ -879,12 +792,15 @@ def factory_report_page():
         cur.execute(
             """
             SELECT
-                DATE_FORMAT(STR_TO_DATE(on_data, '%%d.%%m.%%Y'), '%%d.%%m.%%Y') AS order_day_formatted,
+                DATE_FORMAT(order_date, '%%d.%%m.%%Y') AS order_day,
                 COUNT(*) AS order_count
-            FROM a_zakaz
-            WHERE STR_TO_DATE(on_data, '%%d.%%m.%%Y') BETWEEN %s AND %s
-            GROUP BY STR_TO_DATE(on_data, '%%d.%%m.%%Y')
-            ORDER BY STR_TO_DATE(on_data, '%%d.%%m.%%Y') ASC
+            FROM (
+                SELECT STR_TO_DATE(on_data, '%%d.%%m.%%Y') AS order_date
+                FROM a_zakaz
+                WHERE STR_TO_DATE(on_data, '%%d.%%m.%%Y') BETWEEN %s AND %s
+            ) AS t
+            GROUP BY order_date
+            ORDER BY order_date ASC
             """,
             (start_date, end_date),
         )
@@ -915,7 +831,6 @@ def factory_report_page():
         days_with_orders=totals["days_with_orders"],
         unique_people=totals["unique_people"],
     )
-
     return render_template_string(BASE_HTML, title="Звіт завод", content=html)
 
 
@@ -930,10 +845,7 @@ def employee_visits_page(employee_id: int):
 
     db = get_db()
     with db.cursor() as cur:
-        cur.execute(
-            "SELECT id, full_name, fmoney FROM employees WHERE id = %s",
-            (employee_id,),
-        )
+        cur.execute("SELECT id, full_name, fmoney FROM employees WHERE id = %s", (employee_id,))
         employee = cur.fetchone()
 
         if not employee:
