@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h1>Працівники</h1>
+  <p class="muted">У таблиці можна змінювати поля Активний та Компенсація.</p>
+
+  {% if employees %}
+  <table>
+    <thead>
+      <tr>
+        <th>ПІБ</th>
+        <th>Активний</th>
+        <th>Компенсація</th>
+        <th>Оновлено</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in employees %}
+      <tr>
+        <form method="post" action="{{ url_for('employees.employee_update_page', employee_id=row['id']) }}">
+          <td>{{ row['full_name'] }}</td>
+          <td>
+            <input type="checkbox" name="active" value="1" {% if row['active'] %}checked{% endif %}>
+          </td>
+          <td>
+            <input type="number" name="fmoney" min="0" step="1" value="{{ row['fmoney'] }}" required>
+          </td>
+          <td>{{ row['updated_date'] or '' }}</td>
+          <td><button type="submit">Зберегти</button></td>
+        </form>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty">Немає даних у таблиці employees.</div>
+  {% endif %}
+</div>
+{% endblock %}

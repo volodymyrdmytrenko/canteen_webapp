@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid">
+  <div class="card">
+    <h1>{{ employee['full_name'] }}</h1>
+    <form class="inline" method="get" action="{{ url_for('employees.employee_visits_page', employee_id=employee['id']) }}">
+      <label>
+        Дата з
+        <input type="date" name="start_date" value="{{ start_date }}">
+      </label>
+
+      <label>
+        Дата по
+        <input type="date" name="end_date" value="{{ end_date }}">
+      </label>
+
+      <button type="submit">Показати</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="kpi">
+      <div class="box">
+        <div class="muted">Відвідувань за місяць</div>
+        <div class="num">{{ visits|length }}</div>
+      </div>
+      <div class="box">
+        <div class="muted">Сума за місяць</div>
+        <div class="num">{{ '%.2f'|format(total_sum) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Список дат відвідувань їдальні</h2>
+    {% if visits %}
+    <table>
+      <thead>
+        <tr>
+          <th>Дата і час</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in visits %}
+        <tr>
+          <td>{{ row['visit_time_formatted'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">У вибраному місяці відвідувань немає.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

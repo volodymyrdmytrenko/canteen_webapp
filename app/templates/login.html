@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="card">
+    <h1>KONSORT - їдальня</h1>
+    <p class="muted">Авторизація адміністратора.</p>
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+      <label>
+        Логін
+        <input type="text" name="username" required autocomplete="username">
+      </label>
+
+      <label>
+        Пароль
+        <input type="password" name="password" required autocomplete="current-password">
+      </label>
+
+      <button type="submit">Увійти</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
