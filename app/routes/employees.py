@@ -18,7 +18,7 @@ employees_bp = Blueprint("employees", __name__)
 @login_required
 def employees_page():
     employees = get_all_employees()
-    return render_template("employees.html", title="Працівники", employees=employees)
+    return render_template("employees.html", title="Працівники", employees=employees, active_page="employees")
 
 
 @employees_bp.post("/employees/<int:employee_id>/update")
@@ -61,4 +61,5 @@ def employee_visits_page(employee_id: int):
         end_date=end_date,
         visits=visits,
         total_sum=total_sum,
+        active_page="employees",
     )

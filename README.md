@@ -1,62 +1,61 @@
-# Canteen Web App
+# Canteen App
 
-Web-застосунок для:
-- редагування таблиці `employees`
-- побудови місячного звіту на основі таблиць `employees` + `visits`
-- перегляду відвідувань конкретного співробітника
+Модульна версія Flask-застосунку для адміністрування їдальні.
 
-## Логіка розрахунку
+## Структура
 
-У таблиці `visits` немає окремої колонки з сумою.
-Тому сума рахується так:
-- 1 відвідування = `employees.fmoney` цього співробітника
-- день = сума `fmoney` всіх співробітників, які відвідали їдальню цього дня
-- місяць = сума всіх денних значень
-- співробітник за місяць = `COUNT(visits) * employees.fmoney`
-
-## Структура таблиць
-
-### employees
-- `id`
-- `rfid`
-- `full_name`
-- `active`
-- `updated_at`
-- `fmoney`
-
-### visits
-- `id`
-- `employee_id`
-- `visit_time`
-- `source`
-
-## Запуск у Docker
-
-1. Скопіюйте `.env.example` у `.env`
-2. Заповніть доступ до вашої MySQL
-3. Запустіть:
-
-```bash
-docker compose up --build -d
+```
+canteen_app/
+├── app/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── db.py
+│   ├── decorators.py
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── employees.py
+│   │   ├── main.py
+│   │   └── reports.py
+│   ├── services/
+│   │   ├── auth_service.py
+│   │   ├── employee_service.py
+│   │   └── report_service.py
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   ├── login.html
+│   │   ├── employees.html
+│   │   ├── report.html
+│   │   ├── factory_report.html
+│   │   └── employee_visits.html
+│   └── utils/
+│       └── date_utils.py
+├── .env.example
+├── requirements.txt
+└── run.py
 ```
 
-4. Відкрийте в браузері:
+## Запуск
 
-```bash
-http://localhost:8000
-```
+1. Створіть venv та встановіть залежності:
 
-## Важливо
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Якщо MySQL працює на хості, часто зручно використовувати:
-- `DB_HOST=host.docker.internal`
+2. Заповніть змінні середовища або використайте `.env.example`.
 
-Для Linux інколи треба або:
-- додати `extra_hosts`
-- або вказати реальну IP-адресу сервера MySQL
+3. Запуск:
 
+   ```bash
+   python run.py
+   ```
 
+## Що змінено
 
-Для створення оператора з паролем admin123
-from werkzeug.security import generate_password_hash
-print(generate_password_hash("admin123"))
+- винесено конфігурацію в `config.py`
+- підключення до БД винесено в `db.py`
+- маршрути поділено на blueprints
+- SQL-логіка винесена в `services/`
+- HTML перенесено у `templates/`
+- утиліти роботи з датами винесено окремо

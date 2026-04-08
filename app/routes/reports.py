@@ -44,6 +44,7 @@ def report_page():
         month_total=totals["month_total"],
         visit_count=totals["visit_count"],
         active_employees=totals["active_employees"],
+        active_page="report",
     )
 
 
@@ -74,4 +75,5 @@ def factory_report_page():
         order_count=totals["order_count"],
         days_with_orders=totals["days_with_orders"],
         unique_people=totals["unique_people"],
+        active_page="factory_report",
     )
