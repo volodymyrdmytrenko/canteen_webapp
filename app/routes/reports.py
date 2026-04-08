@@ -59,8 +59,8 @@ def factory_report_page():
     if not start_date or not end_date:
         start_date, end_date = default_period()
 
-    day_orders = get_day_factory_orders(day_date)
-    daily_orders = get_factory_daily_orders(start_date, end_date)
+    day_orders, day_total = get_day_factory_orders(day_date)
+    daily_orders, period_total = get_factory_daily_orders(start_date, end_date)
     totals = get_factory_totals_summary(start_date, end_date)
 
     return render_template(
@@ -71,9 +71,11 @@ def factory_report_page():
         start_date=start_date,
         end_date=end_date,
         day_orders=day_orders,
+        day_total=day_total,
         daily_orders=daily_orders,
         order_count=totals["order_count"],
         days_with_orders=totals["days_with_orders"],
         unique_people=totals["unique_people"],
-        active_page="factory_report",
+        period_total=period_total,
+        active_page="factory",
     )

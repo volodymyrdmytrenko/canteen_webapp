@@ -41,6 +41,7 @@
               <th>Працівник</th>
               <th>Замовлення</th>
               <th>Дата і час замовлення</th>
+              <th>Сума</th>
             </tr>
           </thead>
           <tbody>
@@ -49,8 +50,15 @@
               <td>{{ row['name'] }}</td>
               <td>{{ row['bludo'] }}</td>
               <td>{{ row['data'] }}</td>
+              <td>{{ '%.2f'|format(row['comp'] or 0) }}</td>
             </tr>
             {% endfor %}
+            <tr>
+              <td></td>
+              <td></td>
+              <td><strong>Всього:</strong></td>
+              <td><strong>{{ '%.2f'|format(day_total or 0) }}</strong></td>
+            </tr>
           </tbody>
         </table>
       {% else %}
@@ -79,6 +87,7 @@
           <tr>
             <th>Дата</th>
             <th>Кількість замовлень</th>
+            <th>Сума</th>
           </tr>
         </thead>
         <tbody>
@@ -86,8 +95,14 @@
           <tr>
             <td>{{ row['order_day'] }}</td>
             <td>{{ row['order_count'] }}</td>
+            <td>{{ '%.2f'|format(row['day_total'] or 0) }}</td>
           </tr>
           {% endfor %}
+          <tr>
+            <td></td>
+            <td><strong>Всього:</strong></td>
+            <td><strong>{{ '%.2f'|format(period_total or 0) }}</strong></td>
+          </tr>
         </tbody>
       </table>
     {% endif %}

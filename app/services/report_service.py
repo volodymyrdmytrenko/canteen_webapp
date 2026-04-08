@@ -71,16 +71,20 @@ def get_day_factory_orders(day_date: str):
         cur.execute(
             """
             SELECT
-                name,
-                bludo,
-                data
-            FROM a_zakaz
-            WHERE STR_TO_DATE(on_data, '%%d.%%m.%%Y') = %s
-            ORDER BY name ASC, STR_TO_DATE(data, '%%d.%%m.%%Y %%H:%%i') ASC, id ASC
+                a.name,
+                a.bludo,
+                a.data,
+                COALESCE(sc.comp, 50) AS comp
+            FROM a_zakaz AS a
+            LEFT JOIN spec_comp AS sc ON sc.id = a.user_id
+            WHERE STR_TO_DATE(a.on_data, '%%d.%%m.%%Y') = %s
+            ORDER BY a.name ASC, STR_TO_DATE(a.data, '%%d.%%m.%%Y %%H:%%i') ASC, a.id ASC
             """,
             (day_date,),
         )
-        return cur.fetchall()
+        rows = cur.fetchall()
+    total_sum = sum(float(row["comp"] or 0) for row in rows)
+    return rows, total_sum
 
 
 def get_factory_daily_orders(start_date: str, end_date: str):
@@ -89,19 +93,25 @@ def get_factory_daily_orders(start_date: str, end_date: str):
         cur.execute(
             """
             SELECT
-                DATE_FORMAT(order_date, '%%d.%%m.%%Y') AS order_day,
-                COUNT(*) AS order_count
+                DATE_FORMAT(t.order_date, '%%d.%%m.%%Y') AS order_day,
+                COUNT(*) AS order_count,
+                COALESCE(SUM(t.compensation), 0) AS day_total
             FROM (
-                SELECT STR_TO_DATE(on_data, '%%d.%%m.%%Y') AS order_date
-                FROM a_zakaz
-                WHERE STR_TO_DATE(on_data, '%%d.%%m.%%Y') BETWEEN %s AND %s
+                SELECT
+                    STR_TO_DATE(a.on_data, '%%d.%%m.%%Y') AS order_date,
+                    COALESCE(sc.comp, 50) AS compensation
+                FROM a_zakaz AS a
+                LEFT JOIN spec_comp AS sc ON sc.id = a.user_id
+                WHERE STR_TO_DATE(a.on_data, '%%d.%%m.%%Y') BETWEEN %s AND %s
             ) AS t
-            GROUP BY order_date
-            ORDER BY order_date ASC
+            GROUP BY t.order_date
+            ORDER BY t.order_date ASC
             """,
             (start_date, end_date),
         )
-        return cur.fetchall()
+        rows = cur.fetchall()
+    total_sum = sum(float(row["day_total"] or 0) for row in rows)
+    return rows, total_sum
 
 
 def get_factory_totals_summary(start_date: str, end_date: str):
