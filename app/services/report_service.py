@@ -20,7 +20,7 @@ def get_day_visits(day_date: str):
             FROM visits v
             JOIN employees e ON e.id = v.employee_id
             WHERE DATE(v.visit_time) = %s
-            ORDER BY v.visit_time ASC
+            ORDER BY e.full_name ASC
             """,
             (day_date,),
         )
